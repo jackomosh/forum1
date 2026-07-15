@@ -272,6 +272,82 @@ http.HandleFunc("/contact", func(w http.ResponseWriter, r *http.Request) {
 	})
 })
 
+// Routing mock login states
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		errMsg := ""
+		if r.URL.Query().Get("err") == "true" {
+			errMsg = "Invalid username or password credentials."
+		}
+		render(w, "login.html", PageData{Error: errMsg})
+	})
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "register.html", PageData{})
+	})
+	http.HandleFunc("/forgot-password", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "forgot-password.html", PageData{})
+	})
+
+	// === MOVE THIS BLOCK ABOVE LISTENANDSERVE ===
+	http.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
+		selectedCategory := r.URL.Query().Get("category")
+		selectedFilter := r.URL.Query().Get("filter")
+
+		// 1. Process Filtering Rules (Matches category, created by user, liked by user)
+		var filteredPosts []Post
+		for _, post := range globalPosts {
+			
+			// Check category/subforum matching
+			matchesCategory := selectedCategory == ""
+			if selectedCategory != "" {
+				for _, catName := range post.Categories {
+					for _, c := range mockCategories {
+						if c.Slug == selectedCategory && c.Name == catName {
+							matchesCategory = true
+							break
+						}
+					}
+				}
+			}
+
+			// Check registration constraints (Created vs Liked filter options)
+			matchesFilter := true
+			if loggedInUser != nil {
+				if selectedFilter == "created" && post.AuthorName != loggedInUser.Username {
+					matchesFilter = false
+				}
+				if selectedFilter == "liked" && post.UserVoted != 1 {
+					matchesFilter = false
+				}
+			} else {
+				// If not logged in, enforce empty fallback security on user-bound feeds
+				if selectedFilter == "created" || selectedFilter == "liked" {
+					matchesFilter = false
+				}
+			}
+
+			if matchesCategory && matchesFilter {
+				filteredPosts = append(filteredPosts, post)
+			}
+		}
+
+		// 2. Render subforum template
+		render(w, "posts.html", PageData{
+			User:         loggedInUser, // Toggle to nil if testing unauthorized guest state!
+			Categories:   mockCategories,
+			Posts:        filteredPosts,
+			ActiveCat:    selectedCategory,
+			ActiveFilter: selectedFilter,
+		})
+	})
+
+	// === START SERVER BLOCK (Must always be at the very bottom of main) ===
+	log.Println("=== Front-End Mock Dev Server ===")
+	log.Println("Server running at: http://localhost:8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
+
+
 	// Routing mock login states
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		errMsg := ""
