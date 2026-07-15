@@ -1,0 +1,146 @@
+{{define "title"}}Dev Forum — Technical Minds, Structured Discussions{{end}}
+
+{{define "content"}}
+<div class="landing-page-container">
+
+  <section class="section-block hero-block">
+    <p class="hero-subtitle">EVERYTHING IS TECHNICAL. INCLUDING THIS FORUM.</p>
+    <h1 class="hero-title">Dev Forum</h1>
+  </section>
+
+  <section class="section-block featured-block">
+    <div class="featured-card">
+      <div class="featured-badge">FEATURED POST</div>
+      <div class="featured-img-container">
+        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1400&q=80" alt="Clean Code Workspace" class="editorial-img">
+      </div>
+      <div class="featured-meta">Feb 7 • 5 min read</div>
+      <h2 class="featured-heading">Structuring Go Architectures for High-Concurrency Applications</h2>
+      <p class="featured-text">
+        Building performance-focused servers requires deep insight into thread schedulers, Go's runtime behavior, and memory allocation optimization. In this writeup, we analyze custom middleware layers, context handling, and high-performance routing layouts designed for microsecond-scale latencies...
+      </p>
+    </div>
+  </section>
+
+  <section class="section-block newsletter-block">
+    <div class="newsletter-grid">
+      <div class="newsletter-text">
+        <h2>Never Miss a Technical Deep-Dive.</h2>
+        <p>Get immediate notifications when high-fidelity posts are written. Structured system designs and technical thoughts, straight to your inbox.</p>
+      </div>
+      <form class="newsletter-form" action="/subscribe" method="POST">
+        <div class="input-field-group">
+          <label for="news-email" class="editorial-label">Email Address *</label>
+          <input type="email" id="news-email" name="email" class="editorial-input" required>
+        </div>
+        <div class="checkbox-container">
+          <input type="checkbox" id="news-agree" name="agree" required>
+          <label for="news-agree" class="checkbox-label">Yes, subscribe me to the Dev Forum newsletter *</label>
+        </div>
+        <button type="submit" class="btn-green-submit">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section-block latest-thoughts-block">
+    <h2 class="block-title">Latest Thoughts</h2>
+    
+    <div class="grid-three-column">
+      <article class="thought-card">
+        <div class="card-img-container">
+          <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80" alt="Code Refactoring Desk" class="editorial-img">
+        </div>
+        <div class="card-body">
+          <span class="card-date">Feb 5</span>
+          <h3 class="card-heading"><a href="#">An Introduction to Modern Web Assembly Runtimes</a></h3>
+          <p class="card-description">Unveiling performance differences when deploying system binaries onto modern cloud instances using container-less WASM sandboxes.</p>
+        </div>
+      </article>
+
+      <article class="thought-card">
+        <div class="card-img-container">
+          <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80" alt="Minimal Developer Setups" class="editorial-img">
+        </div>
+        <div class="card-body">
+          <span class="card-date">Feb 3</span>
+          <h3 class="card-heading"><a href="#">Containerization Checklist: Production Standards</a></h3>
+          <p class="card-description">Hardening Docker environments with rootless executions, structural image layers, multi-stage assemblies, and minimal alpine binaries.</p>
+        </div>
+      </article>
+
+      <article class="thought-card">
+        <div class="card-img-container">
+          <img src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&q=80" alt="Structured API Systems" class="editorial-img">
+        </div>
+        <div class="card-body">
+          <span class="card-date">Feb 1</span>
+          <h3 class="card-heading"><a href="#">Designing Clean and Resilient Rest APIs</a></h3>
+          <p class="card-description">How standardizing interfaces, utilizing appropriate state codes, and maintaining explicit contract types mitigates downstream bugs.</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="button-center-wrapper">
+      <a href="/posts" class="btn-green-submit inline-btn">All Posts</a>
+    </div>
+  </section>
+
+  <section class="section-block about-me-block">
+    <div class="split-grid-two">
+      <div class="split-image-container">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" alt="System Architect Portrait" class="editorial-img">
+      </div>
+      <div class="split-text-content">
+        <span class="small-editorial-tag">ABOUT DEVFORUM</span>
+        <h2 class="split-main-heading">DevForum was established to foster robust technical dialogues, share performance audits, and document systems architecture methodologies for contemporary developers.</h2>
+        <a href="/about" class="btn-green-submit inline-btn">Read More</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-block pick-of-month-block">
+    <div class="split-grid-two reverse-mobile">
+      <div class="split-text-content">
+        <h2 class="pick-heading">Resource<br>of The Month</h2>
+        <span class="pick-sub">Designing Data-Intensive Applications / Martin Kleppmann</span>
+        <p class="pick-paragraph">The ultimate handbook on database layouts, scaling capabilities, concurrency models, and stream processing setups. An absolute must-have guide on any architectural engineer's library shelves.</p>
+      </div>
+      <div class="split-image-container border-box-shadow">
+        <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80" alt="Database Systems Textbook Mockup" class="editorial-img">
+      </div>
+    </div>
+  </section>
+
+  <section class="section-block contact-block">
+    <div class="contact-banner-overlay">
+      <h2 class="contact-heading">Get in Touch with our Engineering Team</h2>
+      
+      <form class="contact-editorial-form" action="/contact" method="POST">
+        <div class="form-two-col">
+          <div class="input-field-group">
+            <label for="first-name" class="editorial-label">First name *</label>
+            <input type="text" id="first-name" name="first_name" class="editorial-input" required>
+          </div>
+          <div class="input-field-group">
+            <label for="last-name" class="editorial-label">Last name *</label>
+            <input type="text" id="last-name" name="last_name" class="editorial-input" required>
+          </div>
+        </div>
+
+        <div class="input-field-group">
+          <label for="contact-email" class="editorial-label">Email *</label>
+          <input type="email" id="contact-email" name="email" class="editorial-input" required>
+        </div>
+
+        <div class="input-field-group">
+          <label for="contact-message" class="editorial-label">Message</label>
+          <textarea id="contact-message" name="message" class="editorial-input text-area-input" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn-black-submit">Submit</button>
+      </form>
+    </div>
+  </section>
+
+</div>
+{{end}}

@@ -1,0 +1,52 @@
+{{define "title"}}Sign Up{{end}}
+
+{{define "content"}}
+<div class="auth-page-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-tag">JOIN US</span>
+      <h1 class="auth-title">Create an Account</h1>
+    </div>
+
+    {{if .Error}}
+    <div class="auth-error-alert">
+      <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span>{{.Error}}</span>
+    </div>
+    {{end}}
+
+    <form class="auth-form" action="/register" method="POST">
+      <div class="input-field-group">
+        <label for="reg-username" class="editorial-label">Username *</label>
+        <input type="text" id="reg-username" name="username" class="editorial-input" required autocomplete="username">
+      </div>
+
+      <div class="input-field-group">
+        <label for="reg-email" class="editorial-label">Email Address *</label>
+        <input type="email" id="reg-email" name="email" class="editorial-input" required autocomplete="email">
+      </div>
+
+      <div class="input-field-group">
+        <label for="reg-password" class="editorial-label">Password *</label>
+        <input type="password" id="reg-password" name="password" class="editorial-input" required autocomplete="new-password">
+        <p class="input-guideline-text">Password must contain at least 8 characters, including uppercase, lowercase, and a special character.</p>
+      </div>
+
+      <div class="checkbox-container">
+        <input type="checkbox" id="terms-agree" name="terms" required>
+        <label for="terms-agree" class="checkbox-label">I agree to the <a href="/terms" class="auth-inline-link">Terms and Conditions</a> *</label>
+      </div>
+
+      <button type="submit" class="btn-green-submit auth-submit-btn">Sign Up</button>
+
+      <p class="auth-switch-text">
+        Already have an account? <a href="/login" class="auth-inline-link">Log In</a>
+      </p>
+    </form>
+  </div>
+</div>
+{{end}}
