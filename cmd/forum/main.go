@@ -7,7 +7,266 @@ import (
 )
 
 func main() {
+<<<<<<< HEAD
 	if err := app.Run(); err != nil {
+=======
+	fs := http.FileServer(http.Dir("web/static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	// Route: Public Landing Page (Index)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		// Serves index.html with the dynamically updated globalPosts
+		render(w, "index.html", PageData{
+			User:       nil, // Simulated public guest
+			Categories: mockCategories,
+			Posts:      globalPosts,
+		})
+	})
+
+	// Route: Logged-in Core Forum Dashboard Page
+	http.HandleFunc("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		selectedCategory := r.URL.Query().Get("category")
+		selectedFilter := r.URL.Query().Get("filter")
+
+		// Filter posts by category or user context
+		var filteredPosts []Post
+		for _, post := range globalPosts {
+			matchesCategory := selectedCategory == ""
+			if selectedCategory != "" {
+				for _, catName := range post.Categories {
+					for _, c := range mockCategories {
+						if c.Slug == selectedCategory && c.Name == catName {
+							matchesCategory = true
+							break
+						}
+					}
+				}
+			}
+
+			matchesFilter := true
+			if selectedFilter == "created" && post.AuthorName != loggedInUser.Username {
+				matchesFilter = false
+			}
+			if selectedFilter == "liked" && post.UserVoted != 1 {
+				matchesFilter = false
+			}
+
+			if matchesCategory && matchesFilter {
+				filteredPosts = append(filteredPosts, post)
+			}
+		}
+
+		render(w, "dashboard.html", PageData{
+			User:         loggedInUser,
+			Categories:   mockCategories,
+			Posts:        filteredPosts,
+			ActiveCat:    selectedCategory,
+			ActiveFilter: selectedFilter,
+		})
+	})
+
+	// Action Route: Form handler for creating posts
+	http.HandleFunc("/post/create", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
+
+		title := r.FormValue("title")
+		body := r.FormValue("body")
+		selectedCatIDs := r.Form["categories"]
+
+		// Map structural strings from selected IDs
+		var cats []string
+		for _, idStr := range selectedCatIDs {
+			id, _ := strconv.Atoi(idStr)
+			for _, cat := range mockCategories {
+				if cat.ID == id {
+					cats = append(cats, cat.Name)
+				}
+			}
+		}
+		if len(cats) == 0 {
+			cats = append(cats, "General")
+		}
+
+		// Save the post into our shared global memory space
+		newPost := Post{
+			ID:         len(globalPosts) + 1,
+			Title:      title,
+			Body:       body,
+			AuthorName: loggedInUser.Username,
+			Categories: cats,
+			Likes:      0,
+			Dislikes:   0,
+			UserVoted:  0,
+			CreatedAt:  "Just now",
+			Comments:   []Comment{},
+		}
+
+		// Insert post at the beginning of our list
+		globalPosts = append([]Post{newPost}, globalPosts...)
+
+		// Redirect back to dashboard to see immediate update
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	})
+
+	// Action Route: Form handler to comment on posts
+	http.HandleFunc("/post/comment", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		postID, _ := strconv.Atoi(r.FormValue("post_id"))
+		body := r.FormValue("comment_body")
+
+		if body != "" {
+			for i, post := range globalPosts {
+				if post.ID == postID {
+					newComment := Comment{
+						ID:        len(post.Comments) + 1,
+						Author:    loggedInUser.Username,
+						Body:      body,
+						CreatedAt: "Just now",
+					}
+					globalPosts[i].Comments = append(globalPosts[i].Comments, newComment)
+					break
+				}
+			}
+		}
+
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	})
+
+	// Add this route handler into your main() function in cmd/forum/main.go:
+
+http.HandleFunc("/contact", func(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Form submission logic (Redirects to contact page with a success signal)
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
+		// In a real database scenario, you would save this to an inbox table here.
+		log.Printf("Received message from %s %s (%s)", r.FormValue("first_name"), r.FormValue("last_name"), r.FormValue("email"))
+		http.Redirect(w, r, "/contact?success=true", http.StatusSeeOther)
+		return
+	}
+
+	render(w, "contact.html", PageData{
+		User:       loggedInUser, // Pass active user so Navbar highlights profile state correctly
+		Categories: mockCategories,
+		Posts:      globalPosts,
+	})
+})
+
+// Routing mock login states
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		errMsg := ""
+		if r.URL.Query().Get("err") == "true" {
+			errMsg = "Invalid username or password credentials."
+		}
+		render(w, "login.html", PageData{Error: errMsg})
+	})
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "register.html", PageData{})
+	})
+	http.HandleFunc("/forgot-password", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "forgot-password.html", PageData{})
+	})
+
+	// === MOVE THIS BLOCK ABOVE LISTENANDSERVE ===
+	http.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
+		selectedCategory := r.URL.Query().Get("category")
+		selectedFilter := r.URL.Query().Get("filter")
+
+		// 1. Process Filtering Rules (Matches category, created by user, liked by user)
+		var filteredPosts []Post
+		for _, post := range globalPosts {
+			
+			// Check category/subforum matching
+			matchesCategory := selectedCategory == ""
+			if selectedCategory != "" {
+				for _, catName := range post.Categories {
+					for _, c := range mockCategories {
+						if c.Slug == selectedCategory && c.Name == catName {
+							matchesCategory = true
+							break
+						}
+					}
+				}
+			}
+
+			// Check registration constraints (Created vs Liked filter options)
+			matchesFilter := true
+			if loggedInUser != nil {
+				if selectedFilter == "created" && post.AuthorName != loggedInUser.Username {
+					matchesFilter = false
+				}
+				if selectedFilter == "liked" && post.UserVoted != 1 {
+					matchesFilter = false
+				}
+			} else {
+				// If not logged in, enforce empty fallback security on user-bound feeds
+				if selectedFilter == "created" || selectedFilter == "liked" {
+					matchesFilter = false
+				}
+			}
+
+			if matchesCategory && matchesFilter {
+				filteredPosts = append(filteredPosts, post)
+			}
+		}
+
+		// 2. Render subforum template
+		render(w, "posts.html", PageData{
+			User:         loggedInUser, // Toggle to nil if testing unauthorized guest state!
+			Categories:   mockCategories,
+			Posts:        filteredPosts,
+			ActiveCat:    selectedCategory,
+			ActiveFilter: selectedFilter,
+		})
+	})
+
+	// === START SERVER BLOCK (Must always be at the very bottom of main) ===
+	log.Println("=== Front-End Mock Dev Server ===")
+	log.Println("Server running at: http://localhost:8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
+
+
+	// Routing mock login states
+	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		errMsg := ""
+		if r.URL.Query().Get("err") == "true" {
+			errMsg = "Invalid username or password credentials."
+		}
+		render(w, "login.html", PageData{Error: errMsg})
+	})
+	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "register.html", PageData{})
+	})
+	http.HandleFunc("/forgot-password", func(w http.ResponseWriter, r *http.Request) {
+		render(w, "forgot-password.html", PageData{})
+	})
+
+	log.Println("=== Front-End Mock Dev Server ===")
+	log.Println("Server running at: http://localhost:8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+>>>>>>> ea924b217b629365f964f4cd664923f193ec8af6
 		log.Fatal(err)
 	}
 }

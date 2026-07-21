@@ -1,0 +1,188 @@
+{{define "title"}}Technical Feed — DevForum{{end}}
+
+{{define "content"}}
+<div class="subforum-container">
+
+  <header class="subforum-header-banner">
+    <div class="banner-badge">FEED DISCUSSIONS</div>
+    <h1 class="subforum-main-title">
+      {{if .ActiveCat}}
+        Subforum: {{.ActiveCat}}
+      {{else if eq .ActiveFilter "created"}}
+        My Published Threads
+      {{else if eq .ActiveFilter "liked"}}
+        My Liked Discussions
+      {{else}}
+        All Developer Discussions
+      {{end}}
+    </h1>
+    <p class="subforum-subtitle">Engage with peer-reviewed concepts, structural code patterns, and technical findings.</p>
+  </header>
+
+  <div class="subforum-grid">
+    
+    <aside class="subforum-sidebar">
+      
+      <div class="sidebar-filter-card">
+        <h3 class="sidebar-block-title">Discover</h3>
+        <nav class="sidebar-nav-links" aria-label="Feed Navigation">
+          <a href="/posts" class="sidebar-link {{if and (not .ActiveFilter) (not .ActiveCat)}}active{{end}}">
+            <span class="nav-icon">🌐</span> All Feed
+          </a>
+          
+          {{if .User}}
+            <a href="/posts?filter=created" class="sidebar-link {{if eq .ActiveFilter "created"}}active{{end}}">
+              <span class="nav-icon">✏️</span> My Posts
+            </a>
+            <a href="/posts?filter=liked" class="sidebar-link {{if eq .ActiveFilter "liked"}}active{{end}}">
+              <span class="nav-icon">💚</span> Liked Posts
+            </a>
+          {{else}}
+            <div class="sidebar-link locked-feature" title="Log in to unlock your custom feed">
+              <span class="nav-icon">🔒</span> My Posts <span class="lock-tag">Locked</span>
+            </div>
+            <div class="sidebar-link locked-feature" title="Log in to view liked threads">
+              <span class="nav-icon">🔒</span> Liked Posts <span class="lock-tag">Locked</span>
+            </div>
+          {{end}}
+        </nav>
+      </div>
+
+      <div class="sidebar-filter-card">
+        <h3 class="sidebar-block-title">Subforums</h3>
+        <nav class="sidebar-nav-links" aria-label="Subforum categories">
+          {{range .Categories}}
+            <a href="/posts?category={{.Slug}}" class="sidebar-link category-link {{if eq $.ActiveCat .Slug}}active{{end}}">
+              <span class="category-bullet"></span>
+              <span class="category-name-text">{{.Name}}</span>
+            </a>
+          {{end}}
+        </nav>
+      </div>
+
+    </aside>
+
+    <main class="posts-feed-stream">
+      
+      {{if not .Posts}}
+        <div class="empty-feed-card">
+          <div class="empty-feed-illustration">📂</div>
+          <h2 class="empty-feed-title">No threads found</h2>
+          <p class="empty-feed-text">There are no discussions matching this subforum or filter criterion yet.</p>
+          <a href="/dashboard" class="btn-green-submit inline-btn-margin">Start a Discussion</a>
+        </div>
+      {{else}}
+        
+        {{range .Posts}}
+          <article class="expert-post-card" id="post-{{.ID}}">
+            
+            <div class="expert-post-header">
+              <div class="expert-author-info">
+                <div class="expert-author-avatar">
+                  <span>{{slice .AuthorName 0 1 | html}}</span>
+                </div>
+                <div class="expert-meta-block">
+                  <span class="expert-author-username">@{{.AuthorName}}</span>
+                  <span class="expert-post-date">{{.CreatedAt}}</span>
+                </div>
+              </div>
+
+              <div class="expert-category-badges">
+                {{range .Categories}}
+                  <span class="badge-subforum">{{.}}</span>
+                {{end}}
+              </div>
+            </div>
+
+            <div class="expert-post-body">
+              <h2 class="expert-post-title"><a href="/post/{{.ID}}" class="title-anchor-link">{{.Title}}</a></h2>
+              <p class="expert-post-paragraph">{{.Body}}</p>
+            </div>
+
+            <div class="expert-post-footer">
+              <div class="expert-interaction-toolbar">
+                
+                {{if $.User}}
+                  <div class="vote-segmented-control">
+                    <button class="expert-vote-btn expert-like-btn {{if eq .UserVoted 1}}active-voted-like{{end}}" aria-label="Like post">
+                      <span class="btn-icon">👍</span>
+                      <span class="vote-count">{{.Likes}}</span>
+                    </button>
+                    <button class="expert-vote-btn expert-dislike-btn {{if eq .UserVoted -1}}active-voted-dislike{{end}}" aria-label="Dislike post">
+                      <span class="btn-icon">👎</span>
+                      <span class="vote-count">{{.Dislikes}}</span>
+                    </button>
+                  </div>
+                {{else}}
+                  <div class="vote-segmented-control disabled-control-group" title="Login required to vote">
+                    <span class="expert-vote-btn disabled-btn">
+                      <span class="btn-icon">👍</span>
+                      <span class="vote-count">{{.Likes}}</span>
+                    </span>
+                    <span class="expert-vote-btn disabled-btn">
+                      <span class="btn-icon">👎</span>
+                      <span class="vote-count">{{.Dislikes}}</span>
+                    </span>
+                  </div>
+                {{end}}
+
+                <button class="expert-comment-metric" onclick="document.getElementById('comment-box-{{.ID}}').classList.toggle('expand-comments-box')">
+                  <span class="btn-icon">💬</span>
+                  <span class="comment-count">{{if .Comments}}{{len .Comments}}{{else}}0{{end}}</span> responses
+                </button>
+
+              </div>
+              
+              {{if not $.User}}
+                <div class="guest-action-notice">
+                  <span>🔒 <a href="/login" class="inline-notice-link">Sign in</a> to like, dislike or join this discussion.</span>
+                </div>
+              {{end}}
+            </div>
+
+            <div class="expert-comments-wrapper" id="comment-box-{{.ID}}">
+              <div class="comments-inner-header">Responses ({{if .Comments}}{{len .Comments}}{{else}}0{{end}})</div>
+              
+              <div class="comments-timeline-stack">
+                {{if .Comments}}
+                  {{range .Comments}}
+                    <div class="timeline-comment-card">
+                      <div class="comment-card-avatar">{{slice .Author 0 1 | html}}</div>
+                      <div class="comment-card-body">
+                        <div class="comment-card-top">
+                          <span class="comment-card-author">@{{.Author}}</span>
+                          <span class="comment-card-time">{{.CreatedAt}}</span>
+                        </div>
+                        <p class="comment-card-paragraph">{{.Body}}</p>
+                      </div>
+                    </div>
+                  {{end}}
+                {{else}}
+                  <p class="empty-comments-paragraph">No code feedback has been left on this discussion. Be the first to add to the thread!</p>
+                {{end}}
+              </div>
+
+              {{if $.User}}
+                <form class="expert-comment-form" action="/post/comment" method="POST">
+                  <input type="hidden" name="post_id" value="{{.ID}}">
+                  <input type="text" name="comment_body" placeholder="Provide clear technical feedback or questions..." required class="expert-comment-input">
+                  <button type="submit" class="expert-comment-submit-btn">Send Comment</button>
+                </form>
+              {{else}}
+                <div class="guest-comment-blockade">
+                  <p>You must be signed in to comment on posts. <a href="/login">Create an account or login</a> to contribute.</p>
+                </div>
+              {{end}}
+            </div>
+
+          </article>
+        {{end}}
+
+      {{end}}
+
+    </main>
+
+  </div>
+
+</div>
+{{end}}
