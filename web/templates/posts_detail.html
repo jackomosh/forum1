@@ -1,0 +1,145 @@
+{{define "title"}}{{.Post.Post.Title}} — Dev Forum{{end}}
+
+{{define "content"}}
+<div class="subforum-container stack-layout detail-view-layout">
+  
+  <!-- Back Navigation Button -->
+  <nav class="detail-navigation" aria-label="Back to feed">
+    <a href="/posts" class="back-feed-link">
+      <span class="arrow">←</span> Back to Discussions Feed
+    </a>
+  </nav>
+
+  <!-- Main Animated Detailed Post Card -->
+  <article class="expert-post-card detailed-card" id="post-{{.Post.Post.ID}}">
+    
+    <!-- Post Header -->
+    <header class="expert-post-header detailed-header-wrapper">
+      <div class="expert-author-info">
+        <div class="expert-author-avatar detailed-avatar">
+          <span>{{slice .Post.Author.Username 0 1 | html}}</span>
+        </div>
+        <div class="expert-meta-block vertical-meta-block">
+          <span class="expert-author-username">@{{.Post.Author.Username}}</span>
+          <!-- Date positioned cleanly under username -->
+          <span class="expert-post-date timestamp-subtext">Published on {{.Post.Post.CreatedAt.Format "Jan 02, 2006"}}</span>
+        </div>
+      </div>
+
+      <div class="expert-category-badges">
+        {{range .Post.Categories}}
+          <span class="badge-subforum animated-badge">#{{.Name}}</span>
+        {{end}}
+      </div>
+    </header>
+
+    <!-- Post Title & Content Body -->
+    <div class="expert-post-body detailed-body-wrapper">
+      <h1 class="expert-post-title detailed-title">{{.Post.Post.Title}}</h1>
+      
+      <div class="expert-post-paragraph detailed-body-content">
+        {{.Post.Post.FormattedBody}}
+      </div>
+    </div>
+
+    <!-- Interaction Bar & Likes -->
+<div class="expert-post-footer detailed-footer">
+  <div class="expert-interaction-toolbar">
+    
+    {{if .CurrentUser}}
+    <div class="vote-segmented-control">
+      <form action="/post/vote" method="POST" class="vote-form">
+        <input type="hidden" name="post_id" value="{{.Post.Post.ID}}">
+        <input type="hidden" name="vote_val" value="1">
+        <button type="submit" class="expert-vote-btn expert-like-btn {{if eq .Post.UserVote 1}}active-voted-like{{end}}" aria-label="Like post">
+          <span class="btn-icon">👍</span>
+          <span class="vote-count">{{.Post.Stats.LikeCount}}</span>
+        </button>
+      </form>
+      
+      <div class="vote-divider"></div>
+
+      <form action="/post/vote" method="POST" class="vote-form">
+        <input type="hidden" name="post_id" value="{{.Post.Post.ID}}">
+        <input type="hidden" name="vote_val" value="-1">
+        <button type="submit" class="expert-vote-btn expert-dislike-btn {{if eq .Post.UserVote -1}}active-voted-dislike{{end}}" aria-label="Dislike post">
+          <span class="btn-icon">👎</span>
+          <span class="vote-count">{{.Post.Stats.DislikeCount}}</span>
+        </button>
+      </form>
+    </div>
+    {{else}}
+    <div class="vote-segmented-control disabled-control-group" title="Log in to react">
+      <span class="expert-vote-btn disabled-btn">
+        <span class="btn-icon">👍</span>
+        <span class="vote-count">{{.Post.Stats.LikeCount}}</span>
+      </span>
+      <div class="vote-divider"></div>
+      <span class="expert-vote-btn disabled-btn">
+        <span class="btn-icon">👎</span>
+        <span class="vote-count">{{.Post.Stats.DislikeCount}}</span>
+      </span>
+    </div>
+    {{end}}
+
+    <span class="expert-comment-metric non-interactive-metric">
+      <span class="btn-icon">💬</span>
+      <span class="comment-count">{{if .Comments}}{{len .Comments}}{{else}}0{{end}}</span>
+      <span class="metric-label">Technical Responses</span>
+    </span>
+
+  </div>
+  
+  {{if not .CurrentUser}}
+    <div class="guest-action-notice">
+      <span class="lock-icon">🔒</span>
+      <span><a href="/login" class="inline-notice-link">Sign in</a> to join this discussion and vote.</span>
+    </div>
+  {{end}}
+</div>
+
+    <!-- Comments & Feedback Area -->
+    <div class="expert-comments-wrapper static-comments-box">
+      <h3 class="comments-inner-header">Discussion Thread ({{if .Comments}}{{len .Comments}}{{else}}0{{end}})</h3>
+      
+      <div class="comments-timeline-stack">
+        {{if .Comments}}
+          {{range .Comments}}
+            <div class="timeline-comment-card animated-comment">
+              <div class="comment-card-avatar">{{slice .Author.Username 0 1 | html}}</div>
+              <div class="comment-card-body">
+                <div class="comment-card-top">
+                  <span class="comment-card-author">@{{.Author.Username}}</span>
+                  <span class="comment-card-time">{{.Comment.CreatedAt.Format "Jan 02, 15:04"}}</span>
+                </div>
+                <p class="comment-card-paragraph">{{.Comment.Body}}</p>
+              </div>
+            </div>
+          {{end}}
+        {{else}}
+          <div class="empty-comments-container">
+            <p class="empty-comments-paragraph">No code feedback or engineering reviews have been left on this discussion. Be the first to start the thread!</p>
+          </div>
+        {{end}}
+      </div>
+
+      {{if .CurrentUser}}
+        <form class="expert-comment-form detailed-comment-form" action="/post/comment" method="POST">
+          <input type="hidden" name="post_id" value="{{.Post.Post.ID}}">
+          <input type="hidden" name="redirect_to" value="/post/{{.Post.Post.ID}}">
+          <textarea name="comment_body" placeholder="Write highly technical feedback, suggest an optimization..." required class="comment-input-field-large" rows="3"></textarea>
+          <div class="comment-form-footer" style="margin-top: 1rem;">
+            <button type="submit" class="btn-comment-submit-round">Send Comment</button>
+          </div>
+        </form>
+      {{else}}
+        <div class="guest-comment-blockade">
+          <p>You must be signed in to comment on posts. <a href="/login">Create an account or login</a> to contribute.</p>
+        </div>
+      {{end}}
+    </div>
+
+  </article>
+
+</div>
+{{end}}

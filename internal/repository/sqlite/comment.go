@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"forum/internal/domain"
+	"forum/internal/repository"
 )
+
+var _ repository.CommentRepository = (*CommentRepository)(nil)
 
 type CommentRepository struct {
 	client *Client

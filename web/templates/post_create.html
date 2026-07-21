@@ -1,0 +1,172 @@
+{{define "title"}}Publish Thread — Dev Forum{{end}}
+
+{{define "content"}}
+<div class="dashboard-editor-container">
+  
+  <header class="editor-header-banner">
+    <span class="editor-badge">ENGINEERING SUITE</span>
+    <h1 class="editor-main-title">Draft a Technical Thread</h1>
+    <p class="editor-subtitle">Utilize rich text structures, clean typography, code formats, and imagery to express structured technical ideas.</p>
+  </header>
+
+  {{if .Error}}
+  <div class="auth-error-alert" style="margin-bottom: 1.5rem;">
+    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{.Error}}</span>
+  </div>
+  {{end}}
+
+  <!-- Preview Action Mode Controls -->
+  <div class="editor-mode-tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+    <button type="button" id="btn-mode-edit" class="btn-comment-submit-round" style="padding: 0.5rem 1.5rem;" onclick="switchMode('edit')">Edit Mode</button>
+    <button type="button" id="btn-mode-preview" class="vote-btn" style="border-radius: 30px; padding: 0.5rem 1.5rem;" onclick="switchMode('preview')">👁️ Live Preview</button>
+  </div>
+
+  <form class="rich-post-form" action="/post/create" method="POST" id="publish-form">
+    
+    <!-- Primary Workspace Panels -->
+    <div id="workspace-edit-panel">
+      <div class="editor-input-card">
+        <label for="post-title" class="editor-input-label">Discussion Title *</label>
+        <input 
+          type="text" 
+          id="post-title" 
+          name="title" 
+          placeholder="e.g., Memory Allocation & GC Optimization in Concurrent Go Networks" 
+          class="editor-text-input" 
+          required
+        >
+      </div>
+
+      <div class="editor-input-card">
+        <label class="editor-input-label">Select Subforum Categories *</label>
+        <p class="editor-field-helper">Pick one or more matching subforums to target interested peers.</p>
+        <div class="category-selectors-grid">
+          {{range .Categories}}
+            <label class="category-checkbox-pill">
+              <input type="checkbox" name="categories" value="{{.ID}}" data-category-name="{{.Name}}">
+              <span class="pill-custom-box"></span>
+              <span class="pill-label">{{.Name}}</span>
+            </label>
+          {{end}}
+        </div>
+      </div>
+
+      <div class="editor-input-card">
+        <label class="editor-input-label">Discussion Body *</label>
+        <p class="editor-field-helper">Format codeblocks, size highlights, emphasize parameters, or write complex engineering descriptions.</p>
+        
+        <div class="word-processor-container">
+          <div class="processor-toolbar">
+            
+            <div class="toolbar-group">
+              <select onchange="formatDoc('fontName', this.value)" class="toolbar-select" title="Font Family">
+                <option value="Inter" selected>Inter (Sans-Serif)</option>
+                <option value="'Space Grotesk'">Space Grotesk (Display)</option>
+                <option value="'Courier New'">Courier New (Monospace)</option>
+                <option value="Georgia">Georgia (Serif)</option>
+              </select>
+              
+              <select onchange="formatSize(this.value)" class="toolbar-select" title="Font Size">
+                <option value="2">Small</option>
+                <option value="3" selected>Normal</option>
+                <option value="5">Subheading</option>
+                <option value="6">Heading</option>
+              </select>
+            </div>
+
+            <div class="toolbar-group">
+              <button type="button" onclick="formatDoc('bold')" class="tool-btn" title="Bold"><b>B</b></button>
+              <button type="button" onclick="formatDoc('italic')" class="tool-btn" title="Italic"><i>I</i></button>
+              <button type="button" onclick="formatDoc('underline')" class="tool-btn" title="Underline"><u>U</u></button>
+              <button type="button" onclick="formatDoc('strikeThrough')" class="tool-btn" title="Strikethrough"><s>S</s></button>
+            </div>
+
+            <div class="toolbar-group">
+              <div class="toolbar-color-group" title="Text Color">
+                <span>Text:</span>
+                <input type="color" onchange="formatDoc('foreColor', this.value)" class="toolbar-color-picker" value="#000000">
+              </div>
+              <div class="toolbar-color-group" title="Highlight Color">
+                <span>Back:</span>
+                <input type="color" onchange="formatDoc('hiliteColor', this.value)" class="toolbar-color-picker" value="#ffffff">
+              </div>
+            </div>
+
+            <div class="toolbar-group">
+              <button type="button" onclick="formatDoc('justifyLeft')" class="tool-btn" title="Align Left">▤</button>
+              <button type="button" onclick="formatDoc('justifyCenter')" class="tool-btn" title="Align Center">▧</button>
+              <button type="button" onclick="formatDoc('justifyRight')" class="tool-btn" title="Align Right">▥</button>
+            </div>
+
+            <div class="toolbar-group">
+              <button type="button" onclick="formatDoc('insertUnorderedList')" class="tool-btn" title="Bullet List">• List</button>
+              <button type="button" onclick="formatDoc('insertOrderedList')" class="tool-btn" title="Numbered List">1. List</button>
+              <button type="button" onclick="formatDoc('formatBlock', 'pre')" class="tool-btn code-format" title="Code Block">&lt;/&gt; Code</button>
+            </div>
+
+            <div class="toolbar-group">
+              <button type="button" onclick="insertLink()" class="tool-btn" title="Insert Link">🔗 Link</button>
+              <button type="button" onclick="insertImage()" class="tool-btn" title="Insert Image Link">🖼️ Image</button>
+              <button type="button" onclick="simulateAttachment()" class="tool-btn" title="Simulate Attachment">📎 Attach</button>
+            </div>
+
+            <div class="toolbar-group">
+              <button type="button" onclick="toggleEmojiPicker()" class="tool-btn" title="Insert Emoji">😀 Emojis</button>
+              <button type="button" onclick="insertHashtag()" class="tool-btn" title="Insert Hashtag"># Tag</button>
+            </div>
+
+          </div>
+
+          <div id="emoji-picker-panel" class="emoji-picker-hidden">
+            <div class="emoji-grid">
+              <span onclick="insertEmoji('🚀')">🚀</span>
+              <span onclick="insertEmoji('💻')">💻</span>
+              <span onclick="insertEmoji('🔥')">🔥</span>
+              <span onclick="insertEmoji('✅')">✅</span>
+              <span onclick="insertEmoji('⚙️')">⚙️</span>
+              <span onclick="insertEmoji('💡')">💡</span>
+              <span onclick="insertEmoji('🔧')">🔧</span>
+              <span onclick="insertEmoji('⚠️')">⚠️</span>
+              <span onclick="insertEmoji('📦')">📦</span>
+              <span onclick="insertEmoji('🛡️')">🛡️</span>
+              <span onclick="insertEmoji('🎯')">🎯</span>
+              <span onclick="insertEmoji('📈')">📈</span>
+            </div>
+          </div>
+
+          <div 
+            id="editor-wysiwyg" 
+            class="wysiwyg-content-area" 
+            contenteditable="true" 
+            placeholder="Start writing or paste code structures..."
+          ></div>
+          
+          <input type="hidden" name="body" id="post-body-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Architecture Preview Sandbox (Matches expert-post-card layout constraints) -->
+    <div id="workspace-preview-panel" style="display: none; margin-bottom: 2rem;">
+      <label class="editor-input-label">Thread Feed Preview</label>
+      <p class="editor-field-helper">This is how your technical presentation will display inside the dashboard modules.</p>
+      
+      <article class="expert-post-card">
+        <div class="preview-categories-wrapper" id="preview-badges" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;"></div>
+        <h2 class="card-heading" id="preview-title" style="margin-top: 0; font-size: 1.5rem;"></h2>
+        <div class="featured-text" id="preview-body" style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-wrap; min-height: 60px;"></div>
+      </article>
+    </div>
+
+    <div class="editor-submission-bar">
+      <button type="submit" class="btn-green-submit publish-btn">Publish Post</button>
+    </div>
+
+  </form>
+</div>
+{{end}}

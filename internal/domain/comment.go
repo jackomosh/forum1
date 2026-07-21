@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"time"
+	"html/template"
+)
 
 type CommentID int64
 
@@ -62,4 +65,9 @@ type Vote struct {
 	Value     VoteValue
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// FormattedBody converts raw comment body into template.HTML for rendering.
+func (c Comment) FormattedBody() template.HTML {
+	return template.HTML(c.Body)
 }

@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"log"
 
 	"forum/internal/domain"
+	"forum/internal/repository"
 )
+
+var _ repository.PostRepository = (*PostRepository)(nil)
 
 type PostRepository struct {
 	client *Client
@@ -183,7 +187,7 @@ func (r *PostRepository) Delete(ctx context.Context, id domain.PostID) error {
 	return nil
 }
 
-func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]domain.PostWithAuthor, int, int, error) {
+func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]domain.PostWithAuthor, int, error) {
 	// Build base query with filters
 	var conditions []string
 	var args []interface{}
@@ -230,6 +234,23 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 		args = append(args, searchPattern, searchPattern)
 	}
 
+	// Apply timeframe filter
+	if filter.Timeframe != domain.TimeframeAll {
+		var cutoff time.Time
+		switch filter.Timeframe {
+		case domain.TimeframeDaily:
+			cutoff = time.Now().Add(-24 * time.Hour)
+		case domain.TimeframeWeekly:
+			cutoff = time.Now().Add(-7 * 24 * time.Hour)
+		case domain.TimeframeMonthly:
+			cutoff = time.Now().Add(-30 * 24 * time.Hour)
+		default:
+			cutoff = time.Now().Add(-24 * time.Hour) // fallback
+		}
+		conditions = append(conditions, "p.created_at >= ?")
+		args = append(args, cutoff.Unix())
+	}
+
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
@@ -244,7 +265,7 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 	var total int
 	err := r.client.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
-		return nil, 0, 0, fmt.Errorf("count posts: %w", err)
+		return nil, 0, fmt.Errorf("count posts: %w", err)
 	}
 
 	// Order by
@@ -273,7 +294,13 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 			), 0) as dislike_count,
 			COALESCE((
 				SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status = 'visible'
-			), 0) as comment_count
+			), 0) as comment_count,
+			COALESCE((
+				SELECT v.value FROM votes v
+				WHERE v.target_type = 'post'
+				AND v.target_id = p.id
+				AND v.user_id = ?
+			), 0) as user_vote
 		FROM posts p
 		JOIN users u ON p.author_id = u.id
 		%s
@@ -290,11 +317,17 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 		offset = filter.Offset
 	}
 
-	queryArgs := append(args, limit, offset)
+	queryArgs := make([]interface{}, 0, len(args)+3)
+	queryArgs = append(queryArgs, filter.ViewerID)
+	queryArgs = append(queryArgs, args...)
+	queryArgs = append(queryArgs, limit, offset)
+	log.Printf("🔍 SQL: %s", query)
+	log.Printf("🔍 Args: %+v", queryArgs)
 	rows, err := r.client.db.QueryContext(ctx, query, queryArgs...)
 	if err != nil {
-		return nil, 0, 0, fmt.Errorf("list posts: %w", err)
+		return nil, 0, fmt.Errorf("list posts: %w", err)
 	}
+	log.Printf("📈 Total count: %d", total)
 	defer rows.Close()
 
 	var posts []domain.PostWithAuthor
@@ -302,6 +335,7 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 		var p domain.Post
 		var author domain.PublicUser
 		var stats domain.PostStats
+		var userVote domain.VoteValue
 		var pCreatedAt, pUpdatedAt int64
 		var authorCreatedAt int64
 
@@ -319,9 +353,10 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 			&stats.LikeCount,
 			&stats.DislikeCount,
 			&stats.CommentCount,
+			&userVote,
 		)
 		if err != nil {
-			return nil, 0, 0, fmt.Errorf("scan post: %w", err)
+			return nil, 0, fmt.Errorf("scan post: %w", err)
 		}
 
 		p.CreatedAt = time.Unix(pCreatedAt, 0)
@@ -331,7 +366,7 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 		// Get categories for this post
 		categories, err := r.GetCategoriesByPostID(ctx, p.ID)
 		if err != nil {
-			return nil, 0, 0, fmt.Errorf("get categories for post: %w", err)
+			return nil, 0, fmt.Errorf("get categories for post: %w", err)
 		}
 
 		stats.Score = stats.LikeCount - stats.DislikeCount
@@ -341,11 +376,11 @@ func (r *PostRepository) List(ctx context.Context, filter domain.PostFilter) ([]
 			Author:     author,
 			Categories: categories,
 			Stats:      stats,
-			UserVote:   domain.VoteNone,
+			UserVote:   userVote,
 		})
 	}
 
-	return posts, total, limit, nil
+	return posts, total, nil
 }
 
 func (r *PostRepository) GetCategoriesByPostID(ctx context.Context, postID domain.PostID) ([]domain.Category, error) {

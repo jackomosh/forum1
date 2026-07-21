@@ -13,7 +13,7 @@
   
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body data-authenticated="{{if .User}}true{{else}}false{{end}}">
+<body data-authenticated="{{if .CurrentUser}}true{{else}}false{{end}}">
 
   <div class="site-wrapper">
 
@@ -34,9 +34,9 @@
         <div class="nav-segment spacer-segment"></div>
 
         <div class="nav-segment auth-segment">
-          {{if .User}}
+          {{if .CurrentUser}}
             <a href="/posts?filter=created" class="auth-item">My Activity</a>
-            <a href="/logout" class="auth-item logout-btn">Logout ({{.User.Username}})</a>
+            <a href="/logout" class="auth-item logout-btn">Logout ({{.CurrentUser.Username}})</a>
           {{else}}
             <a href="/login" class="auth-item">Login</a>
             <a href="/register" class="auth-item highlight-auth">Sign Up</a>
@@ -76,9 +76,9 @@
           <a href="/" class="mobile-link">My Blog</a>
           <a href="/contact" class="mobile-link">Contact</a>
           <hr class="mobile-divider">
-          {{if .User}}
+          {{if .CurrentUser}}
             <a href="/posts?filter=created" class="mobile-link">My Activity</a>
-            <a href="/logout" class="mobile-link mobile-logout">Logout ({{.User.Username}})</a>
+            <a href="/logout" class="mobile-link mobile-logout">Logout ({{.CurrentUser.Username}})</a>
           {{else}}
             <a href="/login" class="mobile-link">Login</a>
             <a href="/register" class="mobile-link mobile-highlight-auth">Sign Up</a>
@@ -108,6 +108,8 @@
         <div class="footer-col footer-policies">
           <a href="/accessibility" class="footer-link-item">Accessibility Statement</a>
           <a href="/privacy" class="footer-link-item">Privacy Policy</a>
+          <a href="/contact" class="footer-link-item">Request a feature</a>
+          <a href="/contact" class="footer-link-item">Report a bug</a>
         </div>
 
         <div class="footer-col footer-socials">
@@ -130,7 +132,7 @@
 
         <div class="footer-col footer-copyright">
           <p>© 2026 Dev Forum.</p>
-          <p>Powered and secured by <a href="https://wa.me/+254703489975" target="_blank" rel="noopener">Jack</a></p>
+          <p>Powered and secured by <a href="https://zone01kisumu.ke" target="_blank" rel="noopener">Zone01 Kisumu</a></p>
         </div>
 
       </div>
@@ -138,7 +140,7 @@
 
   </div>
 
-  <script href="static/js/main.js"></script>
+  <script src="/static/js/main.js" defer></script>
 </body>
 </html>
 {{end}}

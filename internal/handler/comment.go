@@ -8,7 +8,6 @@ type CommentForm struct {
 }
 
 type CommentViewData struct {
-	CurrentUser domain.PublicUser
-	Comment     domain.CommentWithAuthor
-	Error       string
+	BaseViewData
+	Comment domain.CommentWithAuthor
 }

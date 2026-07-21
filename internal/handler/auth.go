@@ -1,7 +1,5 @@
 package handler
 
-import "forum/internal/domain"
-
 type RegisterRequest struct {
 	Username string
 	Email    string
@@ -14,7 +12,6 @@ type LoginRequest struct {
 }
 
 type AuthViewData struct {
-	CurrentUser domain.PublicUser
-	Error       string
-	Form        RegisterRequest
+	BaseViewData
+	Form RegisterRequest
 }

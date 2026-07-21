@@ -183,3 +183,127 @@ You should see these messages from your terminal if everything goes as expected
 ### Next Steps (still-working)
 - Hand off dynamic templates to Member 3 for integration with Go HTTP route controllers.
 - Assist Member 5 with mapping specific DOM class hooks in `style.css` and `main.js`.
+
+
+## Day 3 - Backend Entrypoint Refactor & Repository Wiring
+
+**Date:** 2026-07-14
+
+**Author:** [Bramwel Mutugi](https://learn.zone01kisumu.ke/git/mumutugi)
+
+**Branch:** `main`
+
+### Goal
+Restore `cmd/forum/main.go` to a minimal application entrypoint and move backend behavior into the predefined `internal/` modules, using the existing domain, handler, repository, and SQLite structures instead of redeclared mock structs.
+
+### Implementation
+- Reduced `cmd/forum/main.go` to only call application startup through `internal/app`.
+- Moved application composition into `internal/app/app.go`, including config loading, SQLite client creation, schema application, repository construction, static file routing, handler registration, and server startup.
+- Kept runtime defaults inside the existing `internal/config/config.go` file to preserve the original package structure.
+- Added real HTTP handler wiring in `internal/handler/server.go`, with template rendering in `internal/handler/renderer.go` and password helper logic in `internal/handler/password.go`.
+- Updated handler view data in `internal/handler/post.go`, `internal/handler/auth.go`, and `internal/handler/comment.go` so templates receive domain-backed data rather than mock structs.
+- Added missing SQLite implementations for predefined repository contracts:
+  - `internal/repository/sqlite/category.go` implements category persistence.
+  - `internal/repository/sqlite/session.go` implements session persistence.
+  - `internal/repository/sqlite/store.go` aggregates SQLite repositories behind the existing `repository.Repository` interface.
+- Updated existing SQLite repositories to include compile-time interface checks.
+- Fixed `PostRepository.List` so the SQLite implementation matches the existing interface and returns user vote state through `domain.VoteValue`.
+- Updated `web/templates/base.html` and `web/templates/dashboard.html` to use `.CurrentUser`, `domain.PostWithAuthor`, `domain.CommentWithAuthor`, and `domain.Category` data.
+- Adjusted SQLite client settings in `internal/repository/sqlite/client.go` with `_busy_timeout=5000`, foreign-key DSN options, and a single open connection to reduce local SQLite lock contention.
+
+### Verification
+- Formatted changed Go files with `gofmt`.
+- Ran the full test suite:
+
+```sh
+env GOCACHE=/tmp/go-build-cache GOMODCACHE=/tmp/go-mod-cache go test -v ./...
+```
+
+- Smoke-tested the server on an alternate port with `FORUM_PORT=18080` because port `8080` was already occupied.
+- Confirmed `/`, `/dashboard`, `/login`, and `/register` returned `200`.
+- Confirmed protected post/comment actions redirect unauthenticated users to `/login`.
+
+### Next Steps
+- Add HTTP routes and forms or API handlers for post/comment voting.
+- Add CSRF protection for all state-changing forms.
+- Strengthen validation for registration, login, posts, comments, and categories.
+- Add repository tests for posts, comments, categories, sessions, and votes.
+- Add graceful shutdown for the HTTP server.
+- Replace raw schema application on startup with versioned migrations.
+- Cache parsed templates instead of reparsing templates on each request.
+- Ensure developers close any external `sqlite3 forum.db` shell before running the app to avoid SQLite locks.
+
+
+## Day 3 - Dynamic UI Templates & Increased Additional Pages
+
+### **Date:** 2026-07-16
+### **Author:** [Jack Omondi](https://learn.zone01kisumu.ke/git/jacomondi)
+### **Branch:** `feature/ui-templates`
+
+### Goal
+Implement additional frontend pages, a robust, semantic, and reusable Go template structure inside (`web/templates/`) to serve as the unified presentation layer.
+
+### Implementation
+
+- **Frontend Pages (`web/templates/posts.html` & `web/templates/post_create.html` & `web/templates/posts_detail.html` )**: Implemented the fronend pages discussion feed displaying dynamic posts, categories, users create posts and edit posts dynamically, while also having the ability to view only one posts discussion once opened.
+
+### Verification (still-working)
+- Validate all templates syntax using Go template parsing logic.
+- Checke HTML markup semantics and structure via raw local file renders.
+- Confirm CSS selectors are cleanly structured, and each page is styled according to use cases and overal behaviour
+
+### Next Steps (still-working)
+- Hand off dynamic templates to all members for integration with Go HTTP route controllers or any other backend logics.
+- Make sure `style.css` and `main.js` are styling and ensuring responsiveness across pages.
+
+## Day 4 - Menu Buttons
+
+### **Date:** 2026-07-17
+### **Author:** [Jack Omondi](https://learn.zone01kisumu.ke/git/jacomondi)
+### **Branch:** `feature/ui-templates`
+
+### Goal
+Implement additional functioning menu button, across all Go template structure inside (`web/templates/`).
+
+### Implementation
+
+- **Frontend Improvements (`setup an hamburger menu button` )**:
+
+### Verification
+- Validated that all Cascading Style Sheet and JavaScript is present for the menu button to work as expected
+- Confirmed that these changes indeed make sure the menu is working
+
+### Next Steps
+- Fix the post_create page to accept images and render cleanly
+- Fix the filter by relevant / trending discussions
+- Fix the voting i.e likes and dislikes and connect to the backend
+- Insert more categories on the dashboard
+- Add a password toggle on the login / register pages
+- Fix the Online Developers on the dashboard to be dynamic and not hardcoded
+- Fix the posts_detail page to show up now its 404
+
+## Day 5 - Fix Create Post Route Handling
+
+**Date:** 2026-07-18
+**Author:** [Bramwel Mutugi](https://learn.zone01kisumu.ke/git/mumutugi)
+**Branch:** fix/method_error
+
+### Goal
+Resolve the create-post flow from the dashboard, which was returning a 405 Method Not Allowed because the handler only supported POST while the UI routed to the endpoint with GET.
+
+### Implementation
+- Updated [internal/handler/server.go](internal/handler/server.go) so the create-post handler now renders the creation form for GET requests and preserves the existing publish behavior for POST requests.
+- Added a dedicated view model in [internal/handler/post.go](internal/handler/post.go) for the create-post page.
+- Added a regression test in [internal/handler/server_test.go](internal/handler/server_test.go) to ensure the endpoint renders the form successfully on GET.
+- Added forum.db to git ignore for good practice.
+
+### Verification
+- Ran `go test ./internal/handler`
+- Ran `go test ./...`
+
+Both commands completed successfully, and the new regression test passed.
+
+### Next Steps
+- Add CSRF protection for state-changing forms.
+- Improve validation and error feedback for post creation.
+- Continue polishing the dashboard and post creation experience.

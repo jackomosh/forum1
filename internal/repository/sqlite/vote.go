@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"forum/internal/domain"
+	"forum/internal/repository"
 )
 
 type VoteRow struct {
@@ -17,6 +18,8 @@ type VoteRow struct {
 	CreatedAt string
 	UpdatedAt string
 }
+
+var _ repository.VoteRepository = (*VoteRepository)(nil)
 
 // VoteRepository handles vote persistence
 type VoteRepository struct {
@@ -66,14 +69,16 @@ func (r *VoteRepository) GetVote(ctx context.Context, userID domain.UserID, targ
 
 	var vote domain.Vote
 	var targetType string
+	var createdAt int64
+	var updatedAt int64
 
 	err := r.client.db.QueryRowContext(ctx, query, userID, string(target), targetID).Scan(
 		&vote.UserID,
 		&targetType,
 		&vote.TargetID,
 		&vote.Value,
-		&vote.CreatedAt,
-		&vote.UpdatedAt,
+		&createdAt,
+		&updatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -84,6 +89,8 @@ func (r *VoteRepository) GetVote(ctx context.Context, userID domain.UserID, targ
 	}
 
 	vote.Target = domain.VoteTarget(targetType)
+	vote.CreatedAt = time.Unix(createdAt, 0)
+	vote.UpdatedAt = time.Unix(updatedAt, 0)
 	return &vote, nil
 }
 
